@@ -1,0 +1,235 @@
+🟦 Stage 2 — Baseline, Relative Distance & Zones
+
+Goal of Stage 2
+Convert a noisy pixel width signal into:
+
+a stable baseline
+
+a smoothed relative distance
+
+Safe / Close / Danger zones
+→ without calibration, without user input.
+
+1️⃣ Baseline Capture (first 10–20 seconds)
+What “baseline” means
+
+Baseline = user’s natural face width in pixels when sitting normally.
+
+This replaces:
+
+real face width ❌
+
+focal length ❌
+
+absolute distance ❌
+
+Baseline capture rules (important)
+
+During startup window (10–20 sec):
+
+Only accept frames when:
+
+face_detected == True
+
+tracking_stable == True
+
+no hard jump rejected
+
+Collect width_px values
+
+Ignore outliers automatically (jump logic already exists)
+
+How baseline is finalized
+
+Use median (not mean) of collected widths
+→ median is robust to small movements
+
+Once baseline is locked:
+
+Never overwrite it in the same session
+
+📌 This mirrors how posture & eye-tracking systems initialize.
+
+2️⃣ Relative Distance Ratio (core metric)
+
+This is the heart of ViewSafe.
+
+Formula
+ratio = baseline_width / current_width
+
+
+Interpretation:
+
+ratio ≈ 1.0 → same distance as baseline
+
+ratio > 1.0 → user moved closer
+
+ratio < 1.0 → user moved farther away
+
+No centimeters.
+No camera calibration.
+Pure geometry.
+
+3️⃣ EMA Smoothing (mandatory)
+
+Raw ratios fluctuate due to:
+
+blinking
+
+micro head motion
+
+webcam noise
+
+So we smooth.
+
+EMA logic
+smoothed = α * current + (1 - α) * previous
+
+
+Recommended:
+
+α = 0.2 (good balance for human motion)
+
+Rules:
+
+Do NOT update EMA when:
+
+tracking unstable
+
+frame rejected
+
+Hold last valid smoothed value
+
+📌 This prevents flicker and false zone switching.
+
+4️⃣ Zone Classification (locked from Stage 0)
+
+Using smoothed ratio:
+
+Zone	Condition
+🟢 Safe	0.90 ≤ ratio ≤ 1.10
+🟡 Close	1.10 < ratio ≤ 1.30
+🔴 Danger	ratio > 1.30
+
+No overlap.
+Deterministic.
+Easy to reason about.
+
+5️⃣ Time-based Validation (very important)
+
+We never alert instantly.
+
+Per-zone timers
+
+Start timer when entering a zone
+
+Reset when leaving the zone
+
+Danger trigger rules
+
+Trigger danger only if:
+
+Continuous danger ≥ 5–7 seconds
+OR
+
+Cumulative danger ≥ 30 sec in 5 min
+
+Why:
+
+Users lean briefly all the time
+
+We care about sustained strain
+
+This makes ViewSafe feel smart, not annoying.
+
+6️⃣ Overlay behavior (top-right only)
+
+Stage 2 overlay logic:
+
+While baseline is learning
+ViewSafe
+Calibrating posture…
+
+After baseline lock
+🟢 ViewSafe — Safe
+🟡 ViewSafe — Too Close
+🔴 ViewSafe — Move Back
+
+
+Rules:
+
+No numbers shown to user
+
+Color + short text only
+
+Overlay updates only on zone change (not every frame)
+
+7️⃣ Failure handling (must-have)
+If face lost
+
+Pause timers
+
+Freeze ratio
+
+Overlay:
+
+ViewSafe
+Face not detected
+
+If tracking unstable
+
+No zone change
+
+No alerts
+
+Do not corrupt baseline
+
+8️⃣ Internal state machine (conceptual)
+
+You now have these states:
+
+INIT → collecting baseline
+
+ACTIVE_SAFE
+
+ACTIVE_CLOSE
+
+ACTIVE_DANGER
+
+PAUSED_NO_FACE
+
+This makes Stage 3 (alerts + analytics) trivial.
+
+9️⃣ Stage 2 “Done” checklist ✅
+
+Stage 2 is complete when:
+
+Baseline locks once per session
+
+Ratio is stable (no flicker)
+
+Zones don’t oscillate
+
+Short lean-ins don’t trigger alerts
+
+Overlay feels calm and trustworthy
+
+🔑 Why this design is strong (founder lens)
+
+No calibration = frictionless adoption
+
+Relative model = robust across devices
+
+Time-based logic = human-friendly
+
+Offline = trust + privacy
+
+This is exactly how you’d defend it in:
+
+a demo
+
+a pitch
+
+a patent
+
+an interview

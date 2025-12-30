@@ -47,3 +47,23 @@ def draw_top_right_box(
         (tw, th), _ = cv2.getTextSize(line, font, font_scale, thickness)
         cv2.putText(frame, line, (x1 + pad, y + th), font, font_scale, text_color, thickness, cv2.LINE_AA)
         y += th + line_gap
+
+
+def overlay_lines_from_key(message_key: str):
+    if message_key == "CALIBRATING":
+        return ["ViewSafe", "Calibrating posture…"]
+    if message_key == "SAFE":
+        return ["🟢 ViewSafe — Safe"]
+    if message_key == "CLOSE":
+        return ["🟡 ViewSafe — Too Close"]
+    if message_key == "DANGER":
+        return ["🔴 ViewSafe — Move Back"]
+    if message_key == "NO_FACE":
+        return ["ViewSafe", "Face not detected"]
+    if message_key == "UNSTABLE":
+        return ["ViewSafe", "Hold still…"]
+    if message_key == "ADJUST_POSTURE":
+        return ["ViewSafe", "Adjust posture slightly…"]
+    return ["ViewSafe"]
+    
+

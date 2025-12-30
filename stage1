@@ -1,0 +1,154 @@
+## Stage 1 — Camera + Face Landmarks (Desktop MVP)
+
+Goal: **show webcam feed (dev mode) + reliably get face landmarks every frame**. Once this is stable, Stage 2 (distance ratio) becomes easy.
+
+---
+
+### 1) Choose the face model (what we’ll use and why)
+
+**Use: MediaPipe Face Mesh (468 landmarks)**
+Why:
+
+* Landmark points are **more stable** than bounding boxes (tilt/rotation doesn’t break it).
+* Runs **offline** and is fast enough on most laptops.
+
+Fallback (optional later):
+
+* If Face Mesh fails in low light, use **MediaPipe Face Detection** to re-acquire face, then switch back to mesh.
+
+---
+
+### 2) Webcam capture pipeline
+
+**Tech:** OpenCV (`cv2.VideoCapture(0)`)
+
+Key settings you’ll set early:
+
+* Resolution: start with **640×480** (fast + stable)
+* FPS target: **20–30 fps** (don’t chase 60)
+* Flip: optional mirror view for user comfort
+
+What Stage 1 must output:
+
+* A live camera frame
+* A detected face mesh overlay (for debugging)
+* A “Face detected ✅ / ❌” status text
+
+---
+
+### 3) Landmark extraction (what exactly we take from Face Mesh)
+
+Each frame:
+
+1. Read frame from webcam
+2. Convert BGR → RGB
+3. Run Face Mesh inference
+4. Get landmarks: normalized `(x, y)` in range `[0..1]`
+5. Convert to pixels:
+
+   * `px = int(lm.x * frame_width)`
+   * `py = int(lm.y * frame_height)`
+
+Stage 1 deliverable:
+
+* You can draw a few key points or the full mesh.
+
+---
+
+### 4) Pick a stable “width signal” (don’t measure distance yet)
+
+In Stage 1 we don’t calculate zones, but we must decide **which two points define a stable facial width**.
+
+Best options:
+
+* **Outer eye corners** (very stable, less affected by cheeks)
+* Or **cheekbone-ish points** (bigger signal but more variation)
+
+Recommended for MVP:
+✅ **Outer eye corners** (because least noisy)
+
+So your “signal” becomes:
+
+* `width_px = EuclideanDistance(pointA_px, pointB_px)`
+
+We’ll finalize the exact landmark indices in Stage 2 (when we implement).
+
+---
+
+### 5) Handling real-world cases (important in Stage 1)
+
+You need behavior rules for:
+
+**A) No face detected**
+
+* Show overlay: “Face not detected”
+* Pause tracking (don’t update baseline)
+
+**B) Multiple faces detected**
+
+* Choose the **largest face** (closest user) OR face closest to center.
+* Keep consistent selection between frames.
+
+**C) Sudden jumps**
+
+* If the face switches or detection flickers, ignore that frame.
+
+These rules make the pipeline stable.
+
+---
+
+### 6) Performance approach (so it feels smooth)
+
+MVP strategy:
+
+* Run Face Mesh at full frame rate initially.
+* If CPU is high:
+
+  * Reduce resolution
+  * Or run inference every 2nd frame (still smooth)
+  * Keep overlay rendering every frame
+
+Also:
+
+* Turn off drawing the full mesh later (drawing is expensive).
+
+---
+
+### 7) Stage 1 “Done” checklist ✅
+
+You’re done with Stage 1 when:
+
+* Webcam opens reliably
+* Face Mesh detects face in normal lighting
+* You can compute and print a stable `width_px`
+* Status behaves correctly for “no face / multiple face”
+* Runs for 10 minutes without crashing
+
+---
+
+### 8) Stage 1 folder structure (clean from day 1)
+
+* `app.py` (main entry)
+* `vision/`
+
+  * `camera.py` (webcam capture)
+  * `face_tracker.py` (mediapipe mesh + landmarks)
+* `ui/`
+
+  * `overlay.py` (top-right text overlay logic, even if in dev window for now)
+* `utils/`
+
+  * `timing.py` (fps, timers)
+
+---
+
+### 9) What we build next (Stage 2 preview)
+
+Once Stage 1 is stable, Stage 2 adds:
+
+* Baseline capture (first 10–20 sec)
+* Ratio computation: `ratio = baseline_width / current_width`
+* EMA smoothing
+* Safe/Close/Danger zones
+* Finally, we switch from “dev window” to real **desktop top-right overlay**
+
