@@ -1,0 +1,4 @@
+Tool	Role	Analogous to...
+pip	The Installer. It finds and downloads the packages.	The delivery driver.
+setuptools	The Builder. It handles the complex tasks of organizing the code.	The factory floor.
+wheel	The Packager. It turns the code into the fast .whl format.	The shipping container.
