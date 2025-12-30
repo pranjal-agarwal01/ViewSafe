@@ -1,0 +1,128 @@
+Cool — let’s design it like a real product build. Here’s the **tech stack + project stages** (overview only). You tell me which stage to deep-dive.
+
+## Suggested tech stack (practical for laptops)
+
+**Core (MVP)**
+
+* **Python** (fast prototyping)
+* **OpenCV** (webcam capture + overlay UI)
+* **MediaPipe Face Mesh** (face landmarks + stable measurement)
+* **Numpy** (math, smoothing)
+
+**Desktop app packaging**
+
+* **PyInstaller** (Windows exe)
+* Optional: **Auto-start** via Windows Startup / Task Scheduler
+
+**If you want a “real product” UI**
+
+* **Electron + Python backend** (desktop UI)
+  or
+* **Tauri + Rust** (lighter, more advanced)
+
+**If you want cross-platform + browser**
+
+* **Web app**: JavaScript + **MediaPipe Tasks / TensorFlow.js** (runs in browser using webcam)
+* Optional: **Chrome extension** (overlay + notifications)
+
+---
+
+# Project Stages (end-to-end roadmap)
+
+## Stage 0 — Product decisions (1–2 hrs)
+
+* Define thresholds (Safe/Close/Danger)
+* Decide output: overlay + sound + notification
+* Decide platform: Python desktop MVP vs Browser MVP
+
+Deliverable: spec (1-page)
+
+---
+
+## Stage 1 — Camera + Face Detection (MVP base)
+
+* Open webcam stream
+* Run Face Mesh
+* Draw face landmarks/bounding
+
+Deliverable: live webcam window with face tracking
+
+---
+
+## Stage 2 — Distance Metric (relative, calibration-free)
+
+* Pick two stable landmarks (e.g., cheekbone or eye outer corners)
+* Measure pixel distance each frame
+* Compute **ratio vs baseline** (first 10–20 sec)
+* Smooth using EMA
+
+Deliverable: live “ratio” number that’s stable (no zones yet)
+
+---
+
+## Stage 3 — Zones + Alerts (actual usefulness)
+
+* Convert ratio → Safe/Close/Danger zone
+* Overlay text + color indicator
+* Optional alerts:
+
+  * beep
+  * pop-up
+  * vibration (only for mobile)
+
+Deliverable: working “Danger zone” warnings
+
+---
+
+## Stage 4 — Background app experience (people actually use it)
+
+* Run in background (tray icon)
+* Auto-start on boot
+* “Snooze” button (e.g., 10 min)
+* Minimum CPU usage
+
+Deliverable: lightweight always-on monitor
+
+---
+
+## Stage 5 — Analytics (makes it sticky + impressive)
+
+* Track:
+
+  * total screen time
+  * danger time
+  * sessions per day
+* Local storage: JSON/SQLite
+* Simple dashboard (weekly trend)
+
+Deliverable: report screen + charts
+
+---
+
+## Stage 6 — Production packaging & distribution
+
+* Windows installer / signed exe
+* Versioning + auto-update (optional)
+* Privacy mode (no image storage)
+
+Deliverable: “install and run” build
+
+---
+
+## Stage 7 — V2 upgrades (optional)
+
+Pick based on ambition:
+
+* Multiple faces detection (library / office)
+* Posture detection (neck angle)
+* “Low blink rate” indicator (dry eye risk)
+* Dynamic thresholds per user (personalized baseline)
+
+---
+
+Tell me what platform you want first:
+**A) Python desktop MVP (fastest)**
+**B) Browser-only (easiest distribution)**
+**C) Chrome extension (best for students/professionals)**
+
+And I’ll go deep into the chosen stage starting from Stage 1.
